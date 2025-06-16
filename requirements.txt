@@ -1,0 +1,9 @@
+fortiosapi>=1.0.0
+requests>=2.25.1
+cryptography>=3.4.7
+netmiko>=4.1.0
+paramiko>=2.11.0
+napalm>=4.0.0
+pynetbox>=7.0.1
+nornir>=3.3.0
+rich>=13.0.0
