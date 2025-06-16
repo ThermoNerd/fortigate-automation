@@ -3,6 +3,11 @@ from getpass import getpass
 from rich.console import Console
 from rich.table import Table
 import sys
+import time
+from typing import Dict, Optional
+from datetime import datetime
+
+__version__ = "1.1.0"  # Added version tracking
 from datetime import datetime
 import os
 
@@ -27,27 +32,42 @@ def connect_to_fortigate(host, username, password):
         console.print(f"[red]Error connecting to FortiGate: {str(e)}[/red]")
         return None
 
-def get_system_status(connection):
+def get_system_status(connection) -> Optional[Dict]:
     """
-    Get system status information from FortiGate
+    Get comprehensive system status information from FortiGate
+    Returns: Dictionary with command outputs or None if error occurs
     """
-    commands = [
-        'get system status',
-        'get system performance status',
-        'get system interface physical',
-        'diagnose sys session status'
-    ]
+    commands = {
+        'System Status': 'get system status',
+        'Performance': 'get system performance status',
+        'Interfaces': 'get system interface physical',
+        'CPU Usage': 'get system cpu status',
+        'Memory Usage': 'get system memory status',
+        'Active Sessions': 'get system session status',
+        'HA Status': 'get system ha status',
+        'Firmware': 'get system firmware',
+        'License Status': 'get system status | grep License',
+        'VPN Status': 'get vpn ipsec status',
+        'Link Monitor': 'get system link-monitor status',
+        'Resource Usage': 'diagnose sys top'
+    }
     
     status_info = {}
     
     try:
-        for command in commands:
-            console.print(f"[yellow]Executing: {command}[/yellow]")
-            output = connection.send_command(command)
-            status_info[command] = output
+        for description, command in commands.items():
+            console.print(f"[yellow]Executing: {description} ({command})[/yellow]")
+            try:
+                output = connection.send_command(command, read_timeout=30)
+                status_info[description] = output.strip()
+                time.sleep(1)  # Prevent overwhelming the device
+            except Exception as cmd_error:
+                console.print(f"[red]Error executing {description}: {str(cmd_error)}[/red]")
+                status_info[description] = "Command failed"
+                
         return status_info
     except Exception as e:
-        console.print(f"[red]Error getting system status: {str(e)}[/red]")
+        console.print(f"[red]Error in get_system_status: {str(e)}[/red]")
         return None
 
 def display_status(status_info, save_to_file=True):
